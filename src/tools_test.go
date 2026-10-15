@@ -1,10 +1,39 @@
 package main
 
 import (
+	"bufio"
 	"context"
+	"io"
 	"strings"
 	"testing"
 )
+
+func TestReadUserMessageReadsTrimmedLines(t *testing.T) {
+	input := bufio.NewReader(strings.NewReader("  follow-up context  \n"))
+
+	message, err := readUserMessage(input)
+	if err != nil {
+		t.Fatalf("readUserMessage() returned unexpected error: %v", err)
+	}
+	if message != "follow-up context" {
+		t.Errorf("readUserMessage() = %q, want %q", message, "follow-up context")
+	}
+}
+
+func TestReadUserMessageReturnsFinalUnterminatedLine(t *testing.T) {
+	input := bufio.NewReader(strings.NewReader("end"))
+
+	message, err := readUserMessage(input)
+	if err != nil {
+		t.Fatalf("readUserMessage() returned unexpected error: %v", err)
+	}
+	if message != "end" {
+		t.Errorf("readUserMessage() = %q, want %q", message, "end")
+	}
+	if _, err := readUserMessage(input); err != io.EOF {
+		t.Errorf("second read error = %v, want %v", err, io.EOF)
+	}
+}
 
 func TestRestrictedCommandsAreNotExposed(t *testing.T) {
 	for _, tool := range coreutilsToolDefinitions() {

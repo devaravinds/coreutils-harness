@@ -50,7 +50,7 @@ A task may also be supplied on standard input when no task arguments are given:
 printf '%s\n' 'Show disk usage for the current directory' | ./coreutils-harness
 ```
 
-The task and any resulting command output are sent to the configured model as part of the Responses API conversation. The program prints the model's final text to standard output; progress and diagnostic messages are logged separately.
+The task and any resulting command output are sent to the configured model as part of the Responses API conversation. After each response, the conversation stays open: enter another message to add context or ask a follow-up, or type `end` to exit. If the task is read from standard input, enter the initial task on the first line and later messages on subsequent lines. End-of-file also exits the conversation. The program prints the model's response and the end-of-conversation reminder to standard output; prompts and diagnostic messages are written separately.
 
 ## Available commands and execution limits
 
