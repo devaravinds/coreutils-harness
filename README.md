@@ -54,11 +54,11 @@ The task and any resulting command output are sent to the configured model as pa
 
 ## Available commands and execution limits
 
-The model can request the GNU coreutils commands listed in `src/tools.go` (including file inspection, text processing, checksums, and filesystem operations). The `[` command is exposed as `coreutils_bracket`. The exact installed executable is resolved through `PATH`; a command that is unavailable produces a tool error.
+The model can request the non-restricted GNU coreutils commands listed in `src/tools.go` (including file inspection, text processing, and checksums). The `[` command is exposed as `coreutils_bracket`. Commands that can modify or destroy files, alter host state, or launch executables outside the tool allowlist are restricted: they are not exposed as tools, and any direct request for one returns a `restricted command` result without running it. The exact installed executable for allowed commands is resolved through `PATH`; a command that is unavailable produces a tool error.
 
 Each tool invocation has a 30-second timeout, and combined standard output and standard error are capped at 1 MiB. The agent allows up to 32 tool rounds and requests at most 2,048 output tokens per model response. Tool arguments are passed as separate process arguments, never through a shell.
 
-**Safety note:** The allowlist is not a sandbox. Some available commands can modify or delete files, change permissions, or otherwise affect the machine, with the same access rights as the running process. Review tasks carefully and run the program with access only to files and systems you are comfortable allowing it to affect.
+**Safety note:** The restriction list is a command-level safeguard, not a sandbox. Allowed commands still run with the same access rights as the current process. Review tasks carefully and run the program with access only to files and systems you are comfortable allowing it to affect.
 
 ## Project layout
 

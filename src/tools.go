@@ -38,6 +38,19 @@ var coreutilsCommands = []string{
 	"who", "whoami", "yes",
 }
 
+// restrictedCommands are disabled entirely because they can modify the host,
+// destroy data, or launch executables outside the tool allowlist.
+var restrictedCommands = map[string]struct{}{
+	"base32": {}, "base64": {}, "basenc": {}, "chcon": {}, "chgrp": {},
+	"chmod": {}, "chown": {}, "chroot": {}, "cp": {}, "csplit": {},
+	"date": {}, "dd": {}, "env": {}, "install": {}, "link": {}, "ln": {}, 
+	"mkfifo": {}, "mknod": {}, "mktemp": {}, "mv": {},
+	"nice": {}, "nohup": {}, "ptx": {}, "rm": {}, "rmdir": {},
+	"runcon": {}, "shred": {}, "shuf": {}, "sort": {}, "split": {},
+	"stdbuf": {}, "stty": {}, "sync": {}, "tee": {}, "timeout": {}, 
+	"truncate": {}, "unlink": {},
+}
+
 // coreutilsToolName gives each command a unique Responses API function name.
 func coreutilsToolName(command string) string {
 	if command == "[" {
@@ -50,6 +63,9 @@ func coreutilsToolName(command string) string {
 func coreutilsToolDefinitions() []Tool {
 	tools := make([]Tool, 0, len(coreutilsCommands))
 	for _, command := range coreutilsCommands {
+		if isRestrictedCommand(command) {
+			continue
+		}
 		tools = append(tools, Tool{
 			Type:        "function",
 			Name:        coreutilsToolName(command),
@@ -86,6 +102,10 @@ func executeCoreutilsTool(ctx context.Context, toolName, rawArguments string) (s
 	command, ok := commandForTool(toolName)
 	if !ok {
 		return "", fmt.Errorf("unknown tool %q", toolName)
+	}
+	if isRestrictedCommand(command) {
+		log.Printf("Restricted command requested: %s", command)
+		return fmt.Sprintf("restricted command: %s is disabled by policy", command), nil
 	}
 
 	var arguments coreutilsArguments
@@ -142,6 +162,11 @@ func commandForTool(toolName string) (string, bool) {
 		}
 	}
 	return "", false
+}
+
+func isRestrictedCommand(command string) bool {
+	_, restricted := restrictedCommands[command]
+	return restricted
 }
 
 type limitedBuffer struct {
